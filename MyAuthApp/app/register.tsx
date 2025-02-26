@@ -1,14 +1,40 @@
 // app/register.tsx
-import React, { useState } from 'react';
-import { View, Text, TextInput, Button, Alert, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, Button, Alert, StyleSheet, Linking } from 'react-native';
 import axios from 'axios';
 import { useRouter } from 'expo-router';
+import GoogleAuthButton from '@/components/GoogleAuthButton';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function RegisterScreen() {
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const router = useRouter();
+
+
+  useEffect(() => {
+    const handleUrl = async (event: { url: string }) => {
+      const token = extractToken(event.url);
+      if (token) {
+        await AsyncStorage.setItem('token', token);
+        Alert.alert('Login Successful', 'You are now logged in.');
+        router.push('/home');
+      }
+    };
+
+    const subscription = Linking.addEventListener('url', handleUrl);
+    return () => {
+      subscription.remove();
+    };
+  }, []);
+
+  // Utility function to extract token from URL query parameters
+  const extractToken = (url: string): string | null => {
+    // Expected URL format: myapp://auth?token=YOUR_JWT_TOKEN
+    const tokenMatch = url.match(/token=([^&]+)/);
+    return tokenMatch ? tokenMatch[1] : null;
+  };
 
   const registerUser = async () => {
     try {
@@ -56,6 +82,7 @@ export default function RegisterScreen() {
           Log in
         </Text>
       </Text>
+       <GoogleAuthButton />
     </View>
   );
 }

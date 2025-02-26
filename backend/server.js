@@ -13,6 +13,16 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
+// Configure express-session middleware (required for Passport OAuth)
+app.use(session({
+  secret: 'your_session_secret',
+  resave: false,
+  saveUninitialized: true,
+}));
+
+app.use(passport.initialize());
+app.use(passport.session());
+
 mongoose.connect('mongodb://localhost:27017/myauthdb', {
   useNewUrlParser: true,
   useUnifiedTopology: true,
@@ -20,7 +30,7 @@ mongoose.connect('mongodb://localhost:27017/myauthdb', {
 
 // Define User schema and model
 const UserSchema = new mongoose.Schema({
-    email: { type: String, required: true, unique: true },
+  email: { type: String, required: true, unique: true },
   name: { type: String, required: true },
   password: String,
 });
@@ -28,6 +38,48 @@ const User = mongoose.model('User', UserSchema);
 
 // Secret key for JWT
 const JWT_SECRET = 'your_jwt_secret_key';
+
+// Passport session setup.
+passport.serializeUser((user, done) => {
+  done(null, user.id);
+});
+
+passport.deserializeUser(async (id, done) => {
+  try {
+    const user = await User.findById(id);
+    done(null, user);
+  } catch (err) {
+    done(err, null);
+  }
+});
+
+// Configure Passport with GoogleStrategy
+passport.use(new GoogleStrategy({
+    clientID: process.env.GOOGLE_CLIENT_ID, 
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL: "/auth/google/callback",
+  },
+  async (accessToken, refreshToken, profile, done) => {
+    try {
+      const email = profile.emails[0].value;
+      let user = await User.findOne({ email });
+      if (user) {
+        return done(null, user);
+      } else {
+        user = await User.create({
+          email: email,
+          name: profile.displayName,
+          password: '',
+        });
+        return done(null, user);
+      }
+    } catch (err) {
+      return done(err, null);
+    }
+  }
+));
+
+// Routes
 
 app.get("/hello", (req, res) => {
   res.send("Hello World!");
@@ -38,7 +90,7 @@ app.post('/register', async (req, res) => {
   const { email, name, password } = req.body;
   const hashedPassword = await bcrypt.hash(password, 10);
   try {
-    const user = await User.create({email, name, password: hashedPassword });
+    const user = await User.create({ email, name, password: hashedPassword });
     const token = jwt.sign({ id: user._id, email: user.email }, JWT_SECRET, { expiresIn: '1h' });
     return res.json({ status: 'ok', user, token });
   } catch (error) {
@@ -62,7 +114,7 @@ app.post('/login', async (req, res) => {
   }
 });
 
-// Protected Route
+// Protected Route (example using JWT token)
 app.get('/protected', async (req, res) => {
   const token = req.headers['authorization'];
   if (!token) {
@@ -76,7 +128,20 @@ app.get('/protected', async (req, res) => {
   }
 });
 
+// Google OAuth Routes
+
+app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+
+app.get('/auth/google/callback', 
+  passport.authenticate('google', { failureRedirect: '/login' }),
+  (req, res) => {
+    const token = jwt.sign({ id: req.user._id, email: req.user.email }, JWT_SECRET, { expiresIn: '1h' });
+    res.redirect(`myapp://auth?token=${token}`);
+  }
+);
+
 const PORT = 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
