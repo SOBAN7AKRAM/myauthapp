@@ -78,7 +78,7 @@ export default function RegisterScreen() {
       {/* <Button title="Go to Login" onPress={() => router.push('/login')} /> */}
       <Text style={styles.redirectText}>
         Already have an account?{' '}
-        <Text style={styles.linkText} onPress={() => router.push('/login')}>
+        <Text style={styles.linkText} onPress={() => router.push('/')}>
           Log in
         </Text>
       </Text>

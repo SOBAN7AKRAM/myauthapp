@@ -6,7 +6,7 @@ const googleLogo = require('../assets/google.png');
 export default function GoogleAuthButton() {
   const continueWithGoogle = () => {
     // Opens the Google OAuth endpoint in the device's default browser.
-    const url = 'http://localhost:3000/auth/google';
+    const url = 'https://9cef-2a09-bac1-5b20-28-00-3c2-4d.ngrok-free.app/auth/google';
     Linking.openURL(url);
   };
 
