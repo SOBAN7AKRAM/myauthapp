@@ -38,7 +38,7 @@ export default function RegisterScreen() {
 
   const registerUser = async () => {
     try {
-      const response = await axios.post('http://localhost:3000/register', { email, name, password });
+      const response = await axios.post('http://10.0.2.2:3000/register', { email, name, password });
       if (response.data.status === 'ok') {
         Alert.alert('Registration Successful', 'Please log in with your credentials.');
         router.push('/home');

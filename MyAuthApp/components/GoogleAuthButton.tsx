@@ -1,12 +1,13 @@
 import React from 'react';
 import { TouchableOpacity, Image, Text, StyleSheet, Linking } from 'react-native';
 
+
 const googleLogo = require('../assets/google.png');
 
 export default function GoogleAuthButton() {
   const continueWithGoogle = () => {
     // Opens the Google OAuth endpoint in the device's default browser.
-    const url = 'https://9cef-2a09-bac1-5b20-28-00-3c2-4d.ngrok-free.app/auth/google';
+    const url = 'https://e115-111-68-102-12.ngrok-free.app/auth/google';
     Linking.openURL(url);
   };
 

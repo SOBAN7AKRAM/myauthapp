@@ -37,7 +37,7 @@ export default function LoginScreen() {
 
   const loginUser = async () => {
     try {
-      const response = await axios.post('http://localhost:3000/login', { email, password });
+      const response = await axios.post('http://10.0.2.2:3000/login', { email, password });
       if (response.data.status === 'ok') {
         await AsyncStorage.setItem('token', response.data.token);
         Alert.alert('Login Successful', 'You are now logged in.');
